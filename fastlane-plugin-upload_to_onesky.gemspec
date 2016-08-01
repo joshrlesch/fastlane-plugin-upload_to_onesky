@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = %q{josh.r.lesch@gmail.com}
 
   spec.summary       = %q{Upload a strings file to OneSky}
-  # spec.homepage      = "https://github.com/<GITHUB_USERNAME>/fastlane-plugin-upload_to_onesky"
+  spec.homepage      = "https://github.com/joshrlesch/fastlane-plugin-upload_to_onesky"
   spec.license       = "MIT"
 
   spec.files         = Dir["lib/**/*"] + %w(README.md LICENSE)
