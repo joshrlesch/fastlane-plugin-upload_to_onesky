@@ -2,15 +2,28 @@ module Fastlane
   module Actions
     class UploadToOneskyAction < Action
       def self.run(params)
-        Actions.verify_gem!('onesky-ruby')
-        require 'onesky'
+        require 'rest-client'
 
-        client = Onesky::Client.new(params[:public_key], params[:secret_key])
+        file_path = File.expand_path(params[:strings_file_path])
 
-        project = client.project(params[:project_id])
+        file = File.new(file_path, 'rt')
+
+        request_params = {
+            content_type: :json,
+            params: self.auth_hash(params[:public_key], params[:secret_key])
+
+        }
 
         UI.success 'Starting the upload to OneSky'
-        resp = project.upload_file(file: params[:strings_file_path], file_format: params[:strings_file_format])
+        url = "https://platform.api.onesky.io/1/projects/#{params[:project_id]}/files"
+
+        body_hash = {
+            file: file,
+            file_format: params[:strings_file_format],
+            multipart: true
+        }
+
+        resp = RestClient.post(url,body_hash, request_params)
 
         if resp.code == 201
           UI.success "#{File.basename params[:strings_file_path]} was successfully uploaded to project #{params[:project_id]} in OneSky"
@@ -18,6 +31,16 @@ module Fastlane
           UI.error "Error uploading file to OneSky, Status code is #{resp.code}"
         end
 
+      end
+
+      def self.auth_hash(api_key, secret_key)
+        now = Time.now.to_i
+
+        {
+            api_key: api_key,
+            timestamp: now,
+            dev_hash: Digest::MD5.hexdigest(now.to_s + secret_key)
+        }
       end
 
       def self.description
