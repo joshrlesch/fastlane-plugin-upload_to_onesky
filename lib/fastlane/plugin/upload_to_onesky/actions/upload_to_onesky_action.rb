@@ -23,14 +23,27 @@ module Fastlane
             multipart: true
         }
 
-        resp = RestClient.post(url,body_hash, request_params)
+        # True by default on onesky file upload
+        # https://github.com/onesky/api-documentation-platform/blob/master/resources/file.md#upload---upload-a-file
+        unless params[:is_keeping_all_strings]
+          body_hash[:is_keeping_all_strings] = false
+        end
+
+        # False by default on onesky file upload
+        # https://github.com/onesky/api-documentation-platform/blob/master/resources/file.md#upload---upload-a-file
+        if params[:is_allow_translation_same_as_original]
+          body_hash[:is_allow_translation_same_as_original] = true
+        end
+
+        resp = RestClient.post(url,
+                               body_hash,
+                               request_params)
 
         if resp.code == 201
           UI.success "#{File.basename params[:strings_file_path]} was successfully uploaded to project #{params[:project_id]} in OneSky"
         else
           UI.error "Error uploading file to OneSky, Status code is #{resp.code}"
         end
-
       end
 
       def self.auth_hash(api_key, secret_key)
@@ -91,7 +104,19 @@ module Fastlane
                                        optional: false,
                                        verify_block: proc do |value|
                                          raise 'No file format given'.red unless (value and not value.empty?)
-                                       end)
+                                       end),
+          FastlaneCore::ConfigItem.new(key: :is_keeping_all_strings,
+                                      env_name: 'IS_KEEPING_ALL_STRINGS',
+                                      description: 'Deprecate strings if not found in newly uploaded file',
+                                      is_string: false,
+                                      optional: true,
+                                      default_value: true),
+          FastlaneCore::ConfigItem.new(key: :is_allow_translation_same_as_original,
+                                      env_name: 'IS_ALLOW_TRANSLATION_SAME_AS_ARIGINAL',
+                                      description: 'Skip importing translations that are the same as source text',
+                                      is_string: false,
+                                      optional: true,
+                                      default_value: false)
         ]
       end
 
